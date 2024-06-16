@@ -5,96 +5,144 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.core.window import Window
 from kivy.utils import get_color_from_hex
+from kivy.uix.screenmanager import ScreenManager, Screen
+import pyrebase
+from kivy.clock import Clock 
 from kivy.uix.image import Image, AsyncImage
-from functools import partial
-from kivy.uix.modalview import ModalView
 
+Window.size = 360, 640
+
+config = {
+     "apiKey": "AIzaSyAiq1ztUE-uoEcFa55ckUmTApe2NIcFIHc",
+  "authDomain": "bdjujuleiat.firebaseapp.com",
+  "databaseURL": "https://bdjujuleiat-default-rtdb.firebaseio.com",
+  "projectId": "bdjujuleiat",
+  "storageBucket": "bdjujuleiat.appspot.com",
+  "messagingSenderId": "532966553527",
+  "appId": "1:532966553527:web:32fc1a4d139034635d9a32",
+  "measurementId": "G-LLMKQK8Z9V"
+};
+
+firebase = pyrebase.initialize_app(config)
+auth = firebase.auth()
 
 class Login(BoxLayout):
-    def __init__(self, arg1=None, arg2=None, **kwargs):
-        Window.clearcolor = get_color_from_hex('#C8A2C8')
-        super().__init__(**kwargs)
-        self.arg1 = arg1
-        self.arg2 = arg2
-        self.orientation = "vertical"
-        self.padding = [100, 100]
-        self.spacing = 10
-
-        self.add_widget(AsyncImage(source='https://www.clubedoscompositores.com.br/images//imgs/login.png'))
-        
-        self.add_widget(Label(text="LOGIN", font_size=40, font_name='IMPACT', color=get_color_from_hex('#9400D3')))
-
-        
-        self.username_input = TextInput(hint_text="Nome de usuário ...")
-        self.senha_input = TextInput(hint_text="Digite sua senha ...", password=True)
-        
-
-        self.add_widget(Label(text="Nome de usuário:", font_name='arial', color=get_color_from_hex('##0f0360'), font_size=20))
-        self.add_widget(self.username_input)
-        self.add_widget(Label(text="Senha:", font_name='arial', color=get_color_from_hex('##0f0360'), font_size=20))
-        self.add_widget(self.senha_input)
-        
-        
-        self.cadastrar_button = Button(text="Entrar", background_color=(0, 1, 0, 0.75))
-        self.login_button = Button(text="Não possui uma conta? Cadastre-se", background_color=(0, 0, 1))
-        self.login_button.bind(on_release=partial(self.create_new_window, self.arg1, self.arg2))
-        self.add_widget(self.cadastrar_button)
-        self.add_widget(self.login_button)
-
-    def create_new_window(self, arg1, arg2, instance):
-            new_window = NewWindow(arg1, arg2)
-            new_window.open()
-            Window.clearcolor = (1, 1, 1, 1)
-
-    def open(self):
-        self._window = ModalView(size_hint=(0.9, 0.9))
-        self._window.add_widget(self)
-        self._window.open()
-
-class NewWindow(BoxLayout):
-    def init(self, arg1, arg2, **kwargs):
-        Window.clearcolor = (1, 1, 1, 1)
-        super().init(**kwargs)
-        self.arg1 = 'value1'
-        self.arg2 = 'value2'
+    def __init__(self, **kwargs):
+        Window.clearcolor = get_color_from_hex("#C8A2C8")
+        super(Login, self).__init__(**kwargs)
         self.orientation = 'vertical'
-        self.padding = [120, 120]
+        self.padding = [120, 200]
         self.spacing = 10
 
-        self.add_widget(Label(text='Tela Cadastro', font_size=40, font_name='Georgia', color=get_color_from_hex('##e6e5ee')))
+        self.add_widget(AsyncImage(source='https://www.clubedoscompositores.com.br/images//imgs/login.png', size_hint=(None,None),size=(210,120)))
+        self.message_label = Label(text='', color=get_color_from_hex('#FF0000'), font_size=16)
+        self.add_widget(self.message_label)
 
-        self.username_input = TextInput(hint_text="Nome de usuário ...")
-        self.email_input = TextInput(hint_text="Digite seu email ...")
-        self.celular_input = TextInput(hint_text="Digite o número do seu celular ...")
-        self.senha_input = TextInput(hint_text="Digite sua senha ...", password=True)
+        self.add_widget(Label(text='LOGIN', font_size=35, font_name='Impact', color=get_color_from_hex('#9400D3')))
+        
 
-        self.add_widget(Label(text="Nome de usuário:", font_name='Arial', color=get_color_from_hex('#e6e5ee'), font_size=20))
-        self.add_widget(self.username_input)
-        self.add_widget(Label(text="Email:", font_name='Arial', color=get_color_from_hex('#e6e5ee'), font_size=20))
+        self.email_input = TextInput(hint_text="Email:", size_hint_y=None, height=40, background_color=get_color_from_hex('#F0E0E6'), multiline=False, font_size=20)
         self.add_widget(self.email_input)
-        self.add_widget(Label(text="Celular:", font_name='Arial', color=get_color_from_hex('#e6e5ee'), font_size=20))
-        self.add_widget(self.celular_input)
-        self.add_widget(Label(text="Senha:", font_name='Arial', color=get_color_from_hex('#e6e5ee'), font_size=20))
+        
+        self.senha_input = TextInput(hint_text="Senha:", password=True, size_hint_y=None, height=40, background_color=get_color_from_hex('#F0E0E6'), multiline=False, font_size=20)
         self.add_widget(self.senha_input)
 
-        self.button_cadastrar = Button(text='Cadastrar', background_color=(0, 0, 1))
-        self.button_cadastrar.bind(on_release=partial(self.entrar_interface_login, self.arg1, self.arg2))
+        self.button_login = Button(text='Login', background_color=('#2a8c4a'), size_hint_y=None, height=40, font_size=20)
+        self.add_widget(self.button_login)
+        self.button_login.bind(on_press=self.login)
+
+        self.button_cadastrar = Button(text='Cadastro', background_color=('#014b0'), size_hint_y=None, height=40, font_size=20)
         self.add_widget(self.button_cadastrar)
+        self.button_cadastrar.bind(on_press=self.cadastrar)
 
-    def entrar_interface_login(self, arg1, arg2, instance):
-            entrar_login = Login(arg1, arg2)
-            entrar_login.open()
-            Window.clearcolor = (1, 1, 1, 1)
+    def login(self, *args):
+        try:
+            user = auth.sign_in_with_email_and_password(self.email_input.text, self.senha_input.text)
+            print("Login bem-sucedido")
+            self.message_label.text = 'Login bem-sucedido!'
+            self.message_label.color = get_color_from_hex('#008000')  # verde
+            self.message_label.font_size = 20
+            # Redireciona para a tela principal após um segundo (para dar tempo de visualizar a mensagem)
+            Clock.schedule_once(lambda dt: setattr(App.get_running_app().root, 'current', 'Principal'), 5)
+        except Exception as e:
+            print(f"Login falhou: {str(e)}")
+            self.message_label.text = 'Dados inválidos'
+            self.message_label.color = get_color_from_hex('#FF0000')  # vermelho
 
+    def cadastrar(self, *args):
+        App.get_running_app().root.current = 'Cadastro'
 
-    def open(self):
-        self._window = ModalView(size_hint=(0.9, 0.9))
-        self._window.add_widget(self)
-        self._window.open()
+class Cadastro(BoxLayout):
+    def __init__(self, **kwargs):
+        Window.clearcolor = get_color_from_hex("#C8A2C8")
+        super(Cadastro, self).__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.padding = [120, 250]
+        self.spacing = 10
 
-class MyApp(App):
+        self.message_label = Label(text='', color=get_color_from_hex('#FF0000'), font_size=16)
+        self.add_widget(self.message_label)
+
+        self.add_widget(Label(text='Cadastre-se', font_size=35, font_name='impact', color=get_color_from_hex('#FFFFFF')))
+        
+        self.email_input = TextInput(hint_text="Email:", size_hint_y=None, height=40, background_color=get_color_from_hex('#F0E0E6'), multiline=False, font_size=20)
+        self.add_widget(self.email_input)
+        
+        self.senha_input = TextInput(hint_text="Senha:", password=True, size_hint_y=None, height=40, background_color=get_color_from_hex('#F0E0E6'), multiline=False, font_size=20)
+        self.add_widget(self.senha_input)
+
+        self.button_cadastro = Button(text='Cadastrar', background_color=('#A38AB0'), size_hint_y=None, height=40, font_size=20)
+        self.add_widget(self.button_cadastro)
+        self.button_cadastro.bind(on_press=self.cadastrar)
+
+    def cadastrar(self, *args):
+        try:
+            user = auth.create_user_with_email_and_password(self.email_input.text, self.senha_input.text)
+            print("Cadastro bem-sucedido")
+            self.message_label.text = 'Cadastro realizado com sucesso!'
+            self.message_label.color = get_color_from_hex('#008000')  # verde
+            self.message_label.font_size = 20
+            # Redireciona para a tela de login após um segundo (para dar tempo de visualizar a mensagem)
+            Clock.schedule_once(lambda dt: setattr(App.get_running_app().root, 'current', 'Login'), 5)
+        except Exception as e:
+            print(f"Cadastro falhou: {str(e)}")
+            self.message_label.text = 'Erro ao cadastrar'
+            self.message_label.color = get_color_from_hex('#FF0000')  # vermelho
+
+class Principal(BoxLayout):
+    def __init__(self, **kwargs):
+        Window.clearcolor = get_color_from_hex("#C8A2C8")
+        super(Principal, self).__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.padding = [120, 200]
+        self.spacing = 10
+
+        self.add_widget(Label(text='OLÁ!', font_size=35, font_name='Impact', color=get_color_from_hex('#FFFFFF')))
+
+class GerenciadorPg(App):
     def build(self):
-        return Login()
+        sm = ScreenManager()
+        tela_login = Login()
+        tela_cadastro = Cadastro()
+        tela_principal = Principal()
+
+        screen_login = Screen(name='Login')
+        screen_cadastro = Screen(name='Cadastro')
+        screen_principal = Screen(name='Principal')
+
+        screen_login.add_widget(tela_login)
+        screen_cadastro.add_widget(tela_cadastro)
+        screen_principal.add_widget(tela_principal)
+
+        sm.add_widget(screen_login)
+        sm.add_widget(screen_cadastro)
+        sm.add_widget(screen_principal)
+
+        return sm
 
 if __name__ == '__main__':
-    MyApp().run()
+    GerenciadorPg().run()
+
+
+
+
